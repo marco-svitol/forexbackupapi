@@ -1,15 +1,11 @@
-const config_data = require('./config.mysql.json')
-let mysqlConfig = config_data.mysqlConfig
-mysqlConfig.password = '*Cerv32019!'
-const mysql = require('mysql');
-const pool = mysql.createPool(mysqlConfig);
-const fs = require('fs');
+const appConfig = require("../config/app.config.js");
+const dbConfig = require("../config/db.config.js");
+//mysqlConfig.password = '*Cerv32019!'
 const util = require('util')
-const PSActionspath = config_data.PSActionspath;
-const path = require('path');
-
-const spawn = require('child_process').spawn;
-
+const mysql = require('mysql');
+const pool = mysql.createPool(dbConfig);
+const fs = require('fs');
+const PSActionspath = appConfig.PSActionspath;
 
 pool.getConnection((err, conn) => {
   if (err){
@@ -23,17 +19,14 @@ pool.getConnection((err, conn) => {
       console.error('Database connection was refused.')
     }
   }
-
   if (conn) {
-    console.log(`Connected to ${mysqlConfig.database} DB on ${mysqlConfig.host}`)
+    console.log(`Connected to ${dbConfig.database} DB on ${dbConfig.host}`)
     conn.release()
   }
   return
 })
 
-pool.query = util.promisify(pool.query)
-
-
+//deprecated
 module.exports.computerGet = function(hostname, sn, manuf, site, next){
   let strQuery = 'call ComputerGet(?,?,?,?)'
   pool.query(strQuery, [hostname, sn, manuf, site], (err,res) => {
@@ -49,6 +42,7 @@ module.exports.computerGet = function(hostname, sn, manuf, site, next){
   })
 }
 
+//
 module.exports.computerAdd = function(hostname, sn, manuf, site, next){
   let strQuery = 'call ComputerAdd(?,?,?,?)'
   pool.query(strQuery, [hostname, sn, manuf, site], (err,res) => {
@@ -65,13 +59,13 @@ module.exports.computerAdd = function(hostname, sn, manuf, site, next){
 }
 
 module.exports.login = function(username, password,role, next){
-  let strQuery = `select active,${role}role as role from systemusers where username = ? and password = sha1(?)`
+  let strQuery = `select active,${role}role as warole, role from systemusers where username = ? and password = sha1(?)`
   pool.query(strQuery, [username, password], (err,res) => {
     if (err) {
       next (err, "")
     }else{
       if (res.length > 0){
-        if (res[0].active[0] == 1 && res[0].role[0] == 1){
+        if (res[0].active[0] == 1 && res[0].warole[0] == 1){
           next(null,"ok");
         }else{
           next(null,"disabled");
@@ -82,7 +76,6 @@ module.exports.login = function(username, password,role, next){
     } 
   })
 }
-
 
 module.exports.getbkpFolder = function(computerId, next){
   let strQuery = `SELECT foldername, dbname FROM computerbkpfolder WHERE computerid = ?`
@@ -110,33 +103,10 @@ module.exports.getAction = function(computerid, next){
   })
 }
 
-module.exports.saveLogOld = function(hostname, sn, manuf, site, logmsg, next){
-  this.computerGet(hostname, sn, manuf, site, function (err,computerid) {
-    if(err){
-      next(err)
-    }
-    if (computerid === 0) {
-      console.log("Can't savelog, computerid returned 0")
-      next(null)
-    }else{
-      let strQuery = `INSERT INTO computerlogs(computerid,log,CID) SELECT computerid,"${logmsg}",CID FROM computers where computerid = ?`
-      pool.query(strQuery, [computerid], (err, res) => {
-        if (err){
-          console.log("Error while saving log"+err)
-          next(err)
-        }
-        else next(null);
-      })
-    }
-  })
-}
-
-
 module.exports.saveLog = function(computerid, logmsg, next){
   let strQuery = `INSERT INTO computerlogs(computerid,log,CID) SELECT computerid,"${logmsg}",CID FROM computers where computerid = ?`
   pool.query(strQuery, [computerid], (err) => {
     if (err){
-      console.log("Error while saving log"+err)
       next(err)
     }
     else next(null);
@@ -161,6 +131,7 @@ module.exports.addBackup = function(computerid, filename, containsDump, next){
   })
 }
 
+//deprecated add computer if does not exists
 module.exports.getPSAction = function(hostname, sn, manuf, site, next){
   this.computerGet(hostname, sn, manuf, site, (err,computerid) => {
     if(err){
@@ -210,6 +181,7 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
 	})
 }
 
+//deprecated use of parameters
 module.exports.ackPSAction = function(hostname, sn, manuf, site, next){
   this.computerGet(hostname, sn, manuf, site, (err,computerid) => {
     if(err){
@@ -245,40 +217,17 @@ module.exports.getbackupLog = function(user,action='',  next){
 
 module.exports.restoreBackup = function(dbname, dumpfilename, next){
   const {exec} = require('child_process');
-  //var child = exec(`/usr/bin/mysql -u ${mysqlConfig.user} -p${mysqlConfig.password} ${dbname} < ${dumpfilename}`);
-  var err = ""
-
-  //console.log ("jkjlkjlkjlkjlk");
-  exec(`/usr/bin/mysql -u ${mysqlConfig.user} -p${mysqlConfig.password} ${dbname} < ${dumpfilename}`, (error, stdout, stderr) => {
+  exec(`/usr/bin/mysql -u ${dbConfig.user} -p${dbConfig.password} ${dbname} < ${dumpfilename}`, (error, stdout, stderr) => {
+    msg = ''
     if (error) {
-        console.log(`error: ${error.message}`);
-        next(error,false);
+        next(error,'',false);
     }
     if (stderr) {
-        console.log(`stderr: ${stderr}`);
+        msg = stderr;
     }
-    console.log(`stdout: ${stdout}`);
-    next(null,true);
+    msg += ` .${stdout}`;
+    next(null,msg,true);
   });
-
-  /*
-  child.on('exit', (code,err) => {
-    if (code === 0){
-      console.log(`Restore succesfully completed`)
-      next(null,true)
-    }else{
-      next(code, false)
-    }    
-  })
-  
-    /*child.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-   });
-
-  child.stderr.on('data', (data) => {
-      console.log(`stderr RB: ${data}`);  
-  });*/
-  
 }
 
 module.exports.getLastComputerBackup = function(computerId, next){
@@ -320,6 +269,8 @@ module.exports.cancelAction = function(computerId, action, next){
     else next(err, null) //error
   })
 }
+
+pool.query = util.promisify(pool.query)
 
 module.exports.pool = pool;
 
