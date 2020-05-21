@@ -2,7 +2,6 @@
 const appConfig = require("../config/app.config.js");
 const store = require("../database");
 const jwt = require('jsonwebtoken');
-var randtoken = require('rand-token')
 var tokenproperties = appConfig.tokenproperties  //Token
 const logger=require('../logger');  
 const fs = require('fs');
@@ -46,17 +45,65 @@ function restoreDB(computerId, filename, next ){
   })
 }
 
-const capitalize = (s) => {
+function savefile(destfolder, importFile, next){
+  if (fs.existsSync(appConfig.importrootpath+'/'+destfolder)){ 
+    var currentDate = new Date();
+    var hour = leadingZero(currentDate.getHours());
+    var minute = leadingZero(currentDate.getMinutes());
+    var second = leadingZero(currentDate.getSeconds());
+    let ms = leadingZero(currentDate.getMilliseconds());
+    var hms  = `${hour}h${minute}m${second}s${ms}ms`;
+    let filename = hms+'_'+importFile.name
+    let destpath = appConfig.importrootpath+'/'+destfolder+'/'+filename
+    
+    importFile.mv( destpath, function(err) {
+      if (err) next (err,'API Error: ', false);
+        logger.debug(`file saved with name ${destpath}`)
+        bkpcontainsDump(destpath, function(err, containsDump){
+          if(!err){
+            next(null,filename, containsDump);
+          }else{
+            next(null, filename, false);
+          }
+        })
+      });
+  }else{
+    logger.error(`Folder ${fs.existsSync(appConfig.importrootpath)}/${destfolder} does not exist`)
+    throw ('API Error: folder does not exist',"");
+  }
+}
+
+function bkpcontainsDump(zippath, next){
+  const dumpname = appConfig.dumpfilename
+  const zip = new StreamZip({
+      file: zippath,
+      storeEntries: true
+  });
+  zip.on('ready', () => {
+    // Take a look at the files
+    let entry;
+    for (entry of Object.values(zip.entries())) {
+      //const desc = entry.isDirectory ? 'directory' : `${entry.size} bytes`;
+      if (entry.name === dumpname){
+        break
+      }
+    }
+    zip.close()
+    next(null,(entry.name === dumpname))  
+  });
+}
+
+/* const capitalize = (s) => {
   if (typeof s !== 'string') return ''
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
-}
+} */
 //  ======================= functions END ======================= 
 
 //  ======================= Services  =======================
 
 //deprecated
 exports.login = (req, res) => {  // Login Service
-  var username = req.body.username,
+  var username = req.body.user,
   password = req.body.password;
   if (username == null || password == null || username == '' || password ==''){return res.status(400).send("Bad request, check params please")}
   store.login(username,password, "api", function (err, lresult) {
@@ -70,10 +117,7 @@ exports.login = (req, res) => {  // Login Service
         var token = jwt.sign({ id: username, role: lresult.role }, tokenproperties.secret, {
           expiresIn: tokenproperties.tokenTimeout
         });
-        var refreshToken = randtoken.uid(256)
-        refreshTokens[refreshToken] = username
-        usersrole[username] = lresult.role
-        res.status(200).send({ auth: true, token: token, refreshtoken: refreshToken, role: lresult.role});
+        res.status(200).send({ auth: true, token: token});
       }else{
         logger.warn(`Login failed for user ${username}: ${lresult.message}`);
         res.status(401).send({ auth: false});
@@ -82,7 +126,7 @@ exports.login = (req, res) => {  // Login Service
   })
 }
 
-exports.restore = (req, res) => { 
+/* exports.restore = (req, res) => { 
   if (req.body.computerId === null) {
     logger.error('ComputerId is missing')
     return res.status(500).send('ComputerId is missing')
@@ -105,7 +149,7 @@ exports.restore = (req, res) => {
       return res.status(500).send(`Restore of backupfile ${filename} failed`)
     }
   })
-}
+} */
 
 exports.upload = (req, res) => { 
 	if (Object.keys(req.files).length == 0) {
@@ -163,54 +207,6 @@ exports.upload = (req, res) => {
     }
   })  
 };
-
-function savefile(destfolder, importFile, next){
-  if (fs.existsSync(appConfig.importrootpath+'/'+destfolder)){ 
-    var currentDate = new Date();
-    var hour = leadingZero(currentDate.getHours());
-    var minute = leadingZero(currentDate.getMinutes());
-    var second = leadingZero(currentDate.getSeconds());
-    let ms = leadingZero(currentDate.getMilliseconds());
-    var hms  = `${hour}h${minute}m${second}s${ms}ms`;
-    let filename = hms+'_'+importFile.name
-    let destpath = appConfig.importrootpath+'/'+destfolder+'/'+filename
-    
-    importFile.mv( destpath, function(err) {
-      if (err) next (err,'API Error: ', false);
-        logger.debug(`file saved with name ${destpath}`)
-        bkpcontainsDump(destpath, function(err, containsDump){
-          if(!err){
-            next(null,filename, containsDump);
-          }else{
-            next(null, filename, false);
-          }
-        })
-      });
-  }else{
-    logger.error(`Folder ${fs.existsSync(appConfig.importrootpath)}/${destfolder} does not exist`)
-    throw ('API Error: folder does not exist',"");
-  }
-}
-
-function bkpcontainsDump(zippath, next){
-  const dumpname = appConfig.dumpfilename
-  const zip = new StreamZip({
-      file: zippath,
-      storeEntries: true
-  });
-  zip.on('ready', () => {
-    // Take a look at the files
-    let entry;
-    for (entry of Object.values(zip.entries())) {
-      //const desc = entry.isDirectory ? 'directory' : `${entry.size} bytes`;
-      if (entry.name === dumpname){
-        break
-      }
-    }
-    zip.close()
-    next(null,(entry.name === dumpname))  
-  });
-}
 
 exports.psaction = (req, res) => { 
   let cn=req.query.cn

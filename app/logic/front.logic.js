@@ -8,7 +8,7 @@ var refreshTokens = {};
 var usersrole = {};
 
 exports.login = (req, res) => {  // Login Service
-  var username = req.body.username,
+  var username = req.body.user,
   password = req.body.password;
   var role = req.url === '/login'?'api':'web'
   if (username == null || password == null || username == '' || password ==''){return res.status(400).send("Bad request, check params please")}
@@ -42,7 +42,7 @@ exports.logout = (req, res) => {
 
 //TODO: remove old refreshtoken + refreshtoken expiration
 exports.refreshtoken = (req, res) => { 
-  var username = req.body.username
+  var username = req.body.user
   var refreshToken = req.body.refreshtoken
   if((refreshToken in refreshTokens) && (refreshTokens[refreshToken] == username)) {
     var token = jwt.sign({ id: username, role: usersrole[username]}, tokenproperties.secret, {
@@ -56,7 +56,6 @@ exports.refreshtoken = (req, res) => {
     res.status(401).send({ auth: false});
   }
 }
-
 
 exports.backuplog = (req, res) => { 
   store.getbackupLog('super',req.query.action,(err, rows) => {

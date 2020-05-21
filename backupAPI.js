@@ -42,8 +42,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-require("./app/routes/pos.routes")(app);
-require("./app/routes/front.routes")(app);
+require("./app/routes/routes")(app);
 
 //const rTracer = require('cls-rtracer')
 //app.use(rTracer.expressMiddleware()) // keeps unique ID for each request

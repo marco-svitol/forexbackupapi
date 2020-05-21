@@ -5,7 +5,7 @@ const util = require('util')
 const mysql = require('mysql');
 const pool = mysql.createPool(dbConfig);
 const fs = require('fs');
-const PSActionspath = appConfig.PSActionspath;
+const PSActionspath = '../'+appConfig.PSActionspath;
 
 pool.getConnection((err, conn) => {
   if (err){
@@ -66,14 +66,14 @@ module.exports.login = function(username, password,role, next){
     }else{
       if (res.length > 0){
         if (res[0].active[0] == 1 && res[0].warole[0] == 1){
-          next(null,"ok");
+          next(null,{success: true, role: res[0].role}  );
         }else{
-          next(null,"disabled");
+          next(null,{success: false, role: res[0].role, message: "disabled"});
         }
       }else{
-        next(null,"notfound");
+        next(null,{success: false, role: '', message: "not found or wrong password"});
       }
-    } 
+    }
   })
 }
 
@@ -257,7 +257,6 @@ module.exports.requestAction = function(computerId, action, next){
   })
 }
 
-
 module.exports.cancelAction = function(computerId, action, next){
   let strQuery = `call psActionCancel(?,?)`
   pool.query(strQuery, [computerId, action], (err, res) => {
@@ -273,4 +272,3 @@ module.exports.cancelAction = function(computerId, action, next){
 pool.query = util.promisify(pool.query)
 
 module.exports.pool = pool;
-
