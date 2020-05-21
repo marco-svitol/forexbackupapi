@@ -1,0 +1,42 @@
+{
+	"mysqlConfig" : {
+    "user": "cvdbuser",
+    "password": "",
+    "host": "localhost",
+    "database": "CerveBackup",
+    "connectTimeout" : 100000,
+    "multipleStatements": true,
+    "connectionLimit" : 10
+  },
+
+  "appConfig": {
+		"certpath": "../certs/ilciclaio512.crt",
+		"privkeypath" : "../certs/ilciclaio_sha512.key",
+		"certpw" : "",
+		"listenport" : 8100,
+		"importrootpath" : "../../backup/db/MondialChange/forex",
+    "dbusertable" : "cvusers",
+    "dumpfilename"  : "forex_next.sql"
+  },
+	
+	"tokenproperties": {
+		"secret" : "",
+		"tokenTimeout": 10000,
+    "refresh_tokenTimeout" : 360000
+	},
+
+	"debug" : {
+		"enabled" : 0,
+		"debugimportrootpath" : "../../backup/db/MondialChange/forex"
+	},
+
+	"log" : {
+		"thresholdProcessTimeWarning" : 5.0,
+		"thresholdProcessTimeAlert" : 10.0
+	},
+
+	"crypto" : {
+		"encoding" : "utf-8",
+		"password" : ""
+	}
+}
