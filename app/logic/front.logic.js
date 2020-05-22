@@ -1,11 +1,8 @@
 const store = require("../database");
 const logger=require('../logger'); 
+const tokenauth = require('../auth');
 const appConfig = require("../config/app.config.js");
-const jwt = require('jsonwebtoken');
-var randtoken = require('rand-token');
 var tokenproperties = appConfig.tokenproperties;  //Token
-var refreshTokens = {};
-var usersrole = {};
 
 exports.login = (req, res) => {  // Login Service
   var username = req.body.user,
@@ -20,16 +17,10 @@ exports.login = (req, res) => {  // Login Service
       if (lresult.success){
         //req.session.username = username;
         logger.debug(`Login OK for user ${username}. Token expires in ${Math.round(tokenproperties.tokenTimeout / 6)/10} minutes`)      ;
-        var token = jwt.sign({ id: username, role: lresult.role }, tokenproperties.secret, {
-          expiresIn: tokenproperties.tokenTimeout
-        });
-        var refreshToken = randtoken.uid(256)
-        refreshTokens[refreshToken] = username
-        usersrole[username] = lresult.role
-        res.status(200).send({ auth: true, token: token, refreshtoken: refreshToken, role: lresult.role});
+        return tokenauth.generateToken(res, username, lresult.role).status(200).send({ auth: true, role: lresult.role});
       }else{
         logger.warn(`Login failed for user ${username}: ${lresult.message}`);
-        res.status(401).send({ auth: false});
+        return res.status(401).send({ auth: false});
       }
     }
   })
@@ -44,12 +35,10 @@ exports.logout = (req, res) => {
 exports.refreshtoken = (req, res) => { 
   var username = req.body.user
   var refreshToken = req.body.refreshtoken
-  if((refreshToken in refreshTokens) && (refreshTokens[refreshToken] == username)) {
-    var token = jwt.sign({ id: username, role: usersrole[username]}, tokenproperties.secret, {
-      expiresIn: tokenproperties.tokenTimeout
-    });
+  res = tokenauth.generateTokenRefresh(res, username, this.refreshtoken)
+  if (res){
     logger.debug(`Token refreshed for user ${username} : sending new token that will expire in ${Math.round(tokenproperties.tokenTimeout / 6)/10} minutes`);
-    res.status(200).send({ auth: true, token: token})
+    res.status(200).send({auth: true})
   }
   else {
     logger.error(`Refresh token not available for user ${username}`);

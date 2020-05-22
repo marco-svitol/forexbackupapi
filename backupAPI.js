@@ -9,7 +9,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const logger=require('./app/logger'); 
 const cors = require('cors');
 var corsOptions = {
-  origin: ["https://backup.roncola.net","http://localhost:8080"]
+  origin: ["https://backup.roncola.net","http://localhost:8080"],
+  credentials: true
 };
 app.use(cors(corsOptions));
 
