@@ -54,7 +54,12 @@ module.exports.checkJWT = function(req, res, next) { //Function used by Router t
     }
 }
 
-    
+module.exports.logout = (req, res) => {
+  this.checkJWT(req,res, () =>{
+    logger.debug(`Logging out user ${req.user.id} with role ${req.user.role}`)
+    return res.clearCookie('token').status(200).send('ok');
+  })
+};
 
 
 /* 

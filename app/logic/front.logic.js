@@ -26,11 +26,6 @@ exports.login = (req, res) => {  // Login Service
   })
 }
 
-exports.logout = (req, res) => {
-  req.session.reset();
-  logger.info(req.session.user)
-}
-
 //TODO: remove old refreshtoken + refreshtoken expiration
 exports.refreshtoken = (req, res) => { 
   var username = req.body.user
