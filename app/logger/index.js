@@ -52,8 +52,8 @@ winston.configure({
     })
   ),
   transports: [
-    new winston.transports.File({ filename: '../logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: '../logs/combined.log', level: process.env.LOGLEVEL_CONSOLE })
+    new winston.transports.File({ filename: '../logs/ForexBackupAPI/error.log', level: 'error' }),
+    new winston.transports.File({ filename: '../logs/ForexBackupAPI/combined.log', level: process.env.LOGLEVEL_CONSOLE })
   ]
 });
 

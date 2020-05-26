@@ -224,15 +224,19 @@ exports.psaction = (req, res) => {
   let mcftver = req.query.v
   if (mcftver){
     store.saveMCFTver(cn,sn,vendor,site, mcftver, function(err, computerid){
-      if(!err) logger.info(`Saved MCForecTalk version for computerid ${computerid}: ${mcftver}`)
-      else logger.error(`Error while saving MCForecTalk version: ${err}`)
+      if(!err && computerid != 0) logger.info(`Saved MCForecTalk version for computerid ${computerid}: ${mcftver}`)
+      else {
+        computerid==0?logger.error(`Error while saving MCForecTalk version: computerid not found`):logger.error(`Error while saving MCForecTalk version: ${err}`)
+      }
     })
   }
   if (req.query.ack){
-    store.ackPSAction(cn,sn,vendor,site, function (err){
-      if(!err) logger.info(`PSaction acknowledged and pulled from queue`)
-      else logger.error(`Error while acknowledging pscompaction: ${err}`)
-      return res.status(200).send("ok")
+    store.ackPSAction(cn,sn,vendor,site, function (err, computerid){
+      if(!err && computerid != 0) logger.info(`PSaction acknowledged and pulled from queue`)
+      else{
+        computerid==0?logger.error(`Error while acknowledging pscompaction: computerid not found`):logger.error(`Error while acknowledging pscompaction: ${err}`)
+      }
+      return res.status(400).send("computer not found")
     })
   }else{
     store.getPSAction(cn,sn,vendor,site, function (err, psaction) {

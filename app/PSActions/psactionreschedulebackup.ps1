@@ -1,5 +1,5 @@
 $TaskPrefixBackup = "CerveBackup_"
-$SchTime = "12:00"
+$SchTime = "11:30"
 try{
 	$Action = New-ScheduledTaskAction -Execute 'C:\Program Files\PowerShell\6\pwsh.exe' -Argument "-NonInteractive -NoLogo -NoProfile -File `"$(Split-Path 	$MyInvocation.MyCommand.Path)\CerveRemoteBackup.ps1`"" 
 	$Trigger = New-ScheduledTaskTrigger -Daily -At $SchTime -RandomDelay (New-TimeSpan -Minutes 15)

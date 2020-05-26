@@ -5,7 +5,7 @@ const util = require('util')
 const mysql = require('mysql');
 const pool = mysql.createPool(dbConfig);
 const fs = require('fs');
-const PSActionspath = '../'+appConfig.PSActionspath;
+const PSActionspath = appConfig.PSActionspath;
 
 pool.getConnection((err, conn) => {
   if (err){
@@ -186,8 +186,7 @@ module.exports.saveMCFTver = function(hostname, sn, manuf, site, mcftver, next){
       next (err)
     }
     if (computerid === 0) {
-      throw ("saveMCFTver: can't find computer")
-      //next(null,"")
+      next (null, 0)
     }else{
       let strQuery = `
       INSERT INTO computerinfo (
@@ -215,16 +214,16 @@ module.exports.saveMCFTver = function(hostname, sn, manuf, site, mcftver, next){
 module.exports.ackPSAction = function(hostname, sn, manuf, site, next){
   this.computerGet(hostname, sn, manuf, site, (err,computerid) => {
     if(err){
-      next (err)
+      next (err, 0)
     }
     if (computerid === 0) {
-      throw ("ackPSAction: can't find computer")
-      //next(null,"")
+      //throw ("ackPSAction: can't find computer")
+      next(null,0)
     }else{
       let strQuery = `UPDATE pscomputeractions as psca SET ack = 1, timestamp = current_timestamp() WHERE psca.computerid = ? AND psca.ack = 0`
       pool.query(strQuery, [computerid], (err) => {
-        if (err) next(err)
-        else next(null)
+        if (err) next(err, computerid)
+        else next(null, computerid)
       })
       //let logmsg = "PSAction: "+computerid;
       //this.saveLog(computerid, logmsg , function(err){
