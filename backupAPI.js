@@ -1,11 +1,13 @@
 // ------------------------------------------------------------------------------------- Var initialize
 const dotenv = require('dotenv');
 dotenv.config();
-const express = require('express'); 
+const express = require('express');
+const fileUpload = require('express-fileupload');
 const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(fileUpload());
 const logger=require('./app/logger'); 
 const cors = require('cors');
 var corsOptions = {
@@ -26,7 +28,7 @@ app.get("/", (req, res) => {
 app.use(function(req, res, next) { 
   if (Object.keys(req.body).length != 0){
     params = JSON.stringify(req.body)
-    if (req.path.includes('login')){params = 'for user ' + req.body.username}
+    if (req.path.includes('login')){params = 'for user ' + req.body.user}
   }else{
     params = JSON.stringify(req.query)
   }
@@ -45,8 +47,8 @@ app.use((req, res, next) => {
 
 require("./app/routes/routes")(app);
 
-//const rTracer = require('cls-rtracer')
-//app.use(rTracer.expressMiddleware()) // keeps unique ID for each request
+const rTracer = require('cls-rtracer')
+app.use(rTracer.expressMiddleware()) // keeps unique ID for each request
 
 // set port, listen for requests
 app.listen(process.env.SERVER_PORT, () => {

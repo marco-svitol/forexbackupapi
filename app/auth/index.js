@@ -62,8 +62,8 @@ module.exports.logout = (req, res) => {
 };
 
 
-/* 
-module.exports.checkJWT = function(req, res, next) { //Function used by Router to verify token
+
+module.exports.checkJWTOld = function(req, res, next) { //Function used by Router to verify token
   if (req.headers.authorization) {// check headers params
     logger.verbose (req.headers.authorization)
     jwt.verify(req.headers.authorization, appConfig.tokenproperties.secret, function (err, decoded) {  // check valid token
@@ -80,4 +80,4 @@ module.exports.checkJWT = function(req, res, next) { //Function used by Router t
     res.statusMessage = 'You are not authorized';
     return res.status(401).send('You are not authorized')//json({message:'You are not allowed'})
   }
-} */
+}

@@ -8,6 +8,7 @@ module.exports = {
 	"dbusertable" : "cvusers",
 	"tmpfolder" : process.env.TMPFOLDER,
 	"dumpfilename"  : process.env.DUMPFILENAME,
+	"maxDBBackuptokeep" : 7,
 	"PSActionspath": process.env.PSACTIONPATH,
 	"tokenproperties": {
 		"secret" : process.env.TOKENSECRET,

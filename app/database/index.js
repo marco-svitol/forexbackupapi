@@ -1,6 +1,6 @@
 const appConfig = require("../config/app.config.js");
 const dbConfig = require("../config/db.config.js");
-//mysqlConfig.password = '*Cerv32019!'
+const logger=require('../logger'); 
 const util = require('util')
 const mysql = require('mysql');
 const pool = mysql.createPool(dbConfig);
@@ -10,17 +10,17 @@ const PSActionspath = '../'+appConfig.PSActionspath;
 pool.getConnection((err, conn) => {
   if (err){
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      console.error('Database connection was closed.')
+      logger.error('Database connection was closed.')
     }
     if (err.code === 'ER_CON_COUNT_ERROR') {
-      console.error('Database has too many connections.')
+      logger.error('Database has too many connections.')
     }
     if (err.code === 'ECONNREFUSED') {
-      console.error('Database connection was refused.')
+      logger.error('Database connection was refused.')
     }
   }
   if (conn) {
-    console.log(`Connected to ${dbConfig.database} DB on ${dbConfig.host}`)
+    logger.info(`Connected to ${dbConfig.database} DB on ${dbConfig.host}`)
     conn.release()
   }
   return
@@ -149,11 +149,9 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
       this.saveLogHB (computerid, function(err) {
         if (err) console.log("SaveLogHB error: " + err);
       })
-      //console.log(`PSAction: asking action for computerid ${computerid}`)
       let strQuery = `SELECT psaction, psa.psactionid FROM psactions AS psa JOIN pscomputeractions psca ON psa.psactionid = psca.psactionid WHERE psca.computerid = ? AND psca.ack = 0`
       pool.query(strQuery, [computerid], (err,qres) => {
         if (err){
-          //console.log('err in getpsaction1'+err)
           next(err,"")
           return
         }else if(qres.length > 0){
@@ -174,6 +172,38 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
           return
         }
       })
+      //this.saveLog(computerid, logmsg , function(err){
+      //  if (err) console.log("Error while savin log in getPSAction")
+      //})
+    }
+	})
+}
+
+//deprecated use of parameters
+module.exports.saveMCFTver = function(hostname, sn, manuf, site, mcftver, next){
+  this.computerGet(hostname, sn, manuf, site, (err,computerid) => {
+    if(err){
+      next (err)
+    }
+    if (computerid === 0) {
+      throw ("saveMCFTver: can't find computer")
+      //next(null,"")
+    }else{
+      let strQuery = `
+      INSERT INTO computerinfo (
+        computerid, MCForexTalkVersion
+        ) VALUES (
+          ?,?
+        ) 
+        ON DUPLICATE KEY UPDATE
+          MCForexTalkVersion = ?
+        ;
+      `
+      pool.query(strQuery, [computerid, mcftver, mcftver], (err) => {
+        if (err) next(err)
+        else next(null, computerid)
+      })
+      //let logmsg = "PSAction: "+computerid;
       //this.saveLog(computerid, logmsg , function(err){
       //  if (err) console.log("Error while savin log in getPSAction")
       //})

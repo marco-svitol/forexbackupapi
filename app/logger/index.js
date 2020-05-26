@@ -1,13 +1,14 @@
 var winston = require('winston');
 const format = require('winston').format;
 const moment = require('moment-timezone');
+const rTracer = require('cls-rtracer')
 // Wrap Winston logger to print reqId in each log
 
 //const clshooked = require('cls-hooked');
 //const loggerNamespace = clshooked.getNamespace('logger');
 
 var POSId = function() {
-  return `POS:tbd`;
+  return rTracer.id();//`POS:tbd`;
   //const loggerNamespace = clshooked.getNamespace('logger');
   //return `POS:${loggerNamespace.get('requestId')}`;//"99";//req.body.POSId;
 };

@@ -5,11 +5,10 @@ const jwt = require('jsonwebtoken');
 var tokenproperties = appConfig.tokenproperties  //Token
 const logger=require('../logger');  
 const fs = require('fs');
-//const fileUpload = require('express-fileupload');
 const path = require('path');
 const StreamZip = require('node-stream-zip');
 
-//app.use(fileUpload());
+
 
 //  =======================  functions  ======================= 
 function leadingZero(num){ //Internal: add zero char on string
@@ -45,19 +44,52 @@ function restoreDB(computerId, filename, next ){
   })
 }
 
+function sortfilesbydate(folder, next){
+  try{
+    fs.readdir(folder, function(err, files){
+      files = files
+      .map(function (fileName) {
+        return {
+          name: folder + '/' + fileName,
+          time: fs.statSync(folder + '/' + fileName).mtime.getTime()
+        };
+      })
+      .sort(function (a, b) {
+        return a.time - b.time; })
+      .map(function (v) {
+        return v.name; });
+      next(null, files)
+      });
+    
+  }catch{
+    next (err, null)
+  }
+}
+
 function savefile(destfolder, importFile, next){
   if (fs.existsSync(appConfig.importrootpath+'/'+destfolder)){ 
-    var currentDate = new Date();
-    var hour = leadingZero(currentDate.getHours());
-    var minute = leadingZero(currentDate.getMinutes());
-    var second = leadingZero(currentDate.getSeconds());
-    let ms = leadingZero(currentDate.getMilliseconds());
-    var hms  = `${hour}h${minute}m${second}s${ms}ms`;
-    let filename = hms+'_'+importFile.name
-    let destpath = appConfig.importrootpath+'/'+destfolder+'/'+filename
+    //order all files by date and delete filex with index greater than 8
+    sortfilesbydate(appConfig.importrootpath+'/'+destfolder, (err, files) =>{
+      if (!err){
+        logger.debug(`Found ${files.length} DB backups`)
+        for (var i = 0; i<= files.length - appConfig.maxDBBackuptokeep ; i++){
+          logger.verbose(`Deleting ${files[i]}`)
+          fs.unlinkSync(files[i])
+        }
+      }else{
+        logger.error(`Error while rotating backups: ${err}`)
+      }
+      var currentDate = new Date();
+      var hour = leadingZero(currentDate.getHours());
+      var minute = leadingZero(currentDate.getMinutes());
+      var second = leadingZero(currentDate.getSeconds());
+      let ms = leadingZero(currentDate.getMilliseconds());
+      var hms  = `${hour}h${minute}m${second}s${ms}ms`;
+      let filename = hms+'_'+importFile.name
+      let destpath = appConfig.importrootpath+'/'+destfolder+'/'+filename
     
-    importFile.mv( destpath, function(err) {
-      if (err) next (err,'API Error: ', false);
+      importFile.mv( destpath, function(err) {
+        if (err) next (err,'API Error: ', false);
         logger.debug(`file saved with name ${destpath}`)
         bkpcontainsDump(destpath, function(err, containsDump){
           if(!err){
@@ -67,6 +99,7 @@ function savefile(destfolder, importFile, next){
           }
         })
       });
+    })
   }else{
     logger.error(`Folder ${fs.existsSync(appConfig.importrootpath)}/${destfolder} does not exist`)
     throw ('API Error: folder does not exist',"");
@@ -125,31 +158,6 @@ exports.login = (req, res) => {  // Login Service
     }
   })
 }
-
-/* exports.restore = (req, res) => { 
-  if (req.body.computerId === null) {
-    logger.error('ComputerId is missing')
-    return res.status(500).send('ComputerId is missing')
-  }
-  store.getLastComputerBackup(req.body.computerId, (err,filename) => {
-    //filename cato be restored can be passed as argument...(?). If that's the case it overrides lastbackup filename 
-    if (req.body.filename != null) filename = req.body.filename
-    if (!err && filename != "") {
-      restoreDB(req.body.computerId, filename, (err, result) => {
-        if (result) {
-          logger.info(`Restore of backupfile ${filename} was succesfull`)
-          return res.status(200).send(`Restore of backupfile ${filename} was succesfull`)
-        }else{
-          logger.error(`Restore of backupfile ${filename} failed: ${err}`)
-          return res.status(500).send(`Restore of backupfile ${filename} failed`)
-        }
-      })
-    }else{
-      logger.error(`Restore of backupfile ${filename} failed:  ${err}`)
-      return res.status(500).send(`Restore of backupfile ${filename} failed`)
-    }
-  })
-} */
 
 exports.upload = (req, res) => { 
 	if (Object.keys(req.files).length == 0) {
@@ -213,6 +221,13 @@ exports.psaction = (req, res) => {
   let sn=req.query.sn
   let vendor=req.query.vendor
   let site=req.query.site
+  let mcftver = req.query.v
+  if (mcftver){
+    store.saveMCFTver(cn,sn,vendor,site, mcftver, function(err, computerid){
+      if(!err) logger.info(`Saved MCForecTalk version for computerid ${computerid}: ${mcftver}`)
+      else logger.error(`Error while saving MCForecTalk version: ${err}`)
+    })
+  }
   if (req.query.ack){
     store.ackPSAction(cn,sn,vendor,site, function (err){
       if(!err) logger.info(`PSaction acknowledged and pulled from queue`)
