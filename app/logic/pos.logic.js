@@ -185,7 +185,7 @@ exports.upload = (req, res) => {
                   restoreDB(computerId, filename, (err, result) => {
                     if (result) {
                       logger.info(`Restore of backupfile ${filename} was succesfull`)
-                      return res.status(200).send(`Restore of backupfile ${filename} was succesfull`)
+                      return res.status(200).send(`true`)
                     }else{
                       logger.error(`Restore of backupfile ${filename} failed: ${err}`)
                       return res.status(500).send(`Restore of backupfile ${filename} failed`)
