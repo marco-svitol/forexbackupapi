@@ -140,7 +140,7 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
     if (computerid === 0) {
       this.computerAdd(hostname,sn,manuf,site,function(err, computerid){
         if(err) throw(err)
-        console.log('PSAction: added compid '+computerid)
+        logger.debug(`PSAction: added compid ${computerid}`)
       })
       next(null,"")
       return
@@ -160,9 +160,7 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
           if (qres[0].psaction.substring(0,1) === '['){
             let PSfile = (qres[0].psaction.replace("[","")).replace("]","")
             fs.readFile( `${__dirname}/${PSActionspath}/${PSfile}`,function (err, data) {
-              if (err) {
-                throw err;
-              }
+              if (err) next(err);
               next(null,data.toString());
             });
           }else next(null,qres[0].psaction);

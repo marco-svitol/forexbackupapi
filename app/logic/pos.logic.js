@@ -17,11 +17,11 @@ function leadingZero(num){ //Internal: add zero char on string
 
 function restoreDB(computerId, filename, next ){
   const dumpname = appConfig.dumpfilename
-  const tmpdumpfile = path.join(__dirname+'/'+appConfig.tmpfolder+'/../tmp/tmpdumpfile.sql')
+  const tmpdumpfile = path.join(process.cwd()+'/'+appConfig.tmpfolder+'/../tmp/tmpdumpfile.sql')
   //get dbname from bkpfolder table using computerid
   store.getbkpFolder(computerId, function(err, destfolder, dbname){
     if(!err && destfolder != "" && dbname != ""){
-        const zippath = appConfig.importrootpath+'/'+destfolder+'/'+filename
+        const zippath = path.join(process.cwd()+'/'+appConfig.importrootpath+'/'+destfolder+'/'+filename)
         const zip = new StreamZip({
           file: zippath,
           storeEntries: true
@@ -69,7 +69,7 @@ function sortfilesbydate(folder, next){
 function savefile(destfolder, importFile, next){
   if (fs.existsSync(appConfig.importrootpath+'/'+destfolder)){ 
     //order all files by date and delete filex with index greater than 8
-    sortfilesbydate(appConfig.importrootpath+'/'+destfolder, (err, files) =>{
+    sortfilesbydate(process.cwd()+'/'+appConfig.importrootpath+'/'+destfolder, (err, files) =>{
       if (!err){
         logger.debug(`Found ${files.length} DB backups`)
         for (var i = 0; i<= files.length - appConfig.maxDBBackuptokeep ; i++){
