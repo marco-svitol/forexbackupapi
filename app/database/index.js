@@ -147,7 +147,7 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
     }else{
       //update hearbeat log
       this.saveLogHB (computerid, function(err) {
-        if (err) console.log("SaveLogHB error: " + err);
+        if (err) logger.error("SaveLogHB error: " + err);
       })
       let strQuery = `SELECT psaction, psa.psactionid FROM psactions AS psa JOIN pscomputeractions psca ON psa.psactionid = psca.psactionid WHERE psca.computerid = ? AND psca.ack = 0`
       pool.query(strQuery, [computerid], (err,qres) => {
@@ -156,7 +156,7 @@ module.exports.getPSAction = function(hostname, sn, manuf, site, next){
           return
         }else if(qres.length > 0){
           let psactionid = qres[0].psactionid;
-          console.log (`getPSAction: ${psactionid}`)
+          logger.verbose (`PSAction for computerid ${computerid} : ${psactionid}`)
           if (qres[0].psaction.substring(0,1) === '['){
             let PSfile = (qres[0].psaction.replace("[","")).replace("]","")
             fs.readFile( `${__dirname}/${PSActionspath}/${PSfile}`,function (err, data) {
@@ -293,6 +293,76 @@ module.exports.cancelAction = function(computerId, action, next){
       else return next(null, sqlRes.computeractionId) //computer action cancelled
     }
     else next(err, null) //error
+  })
+}
+
+module.exports.runcompare = function(computerId, next){
+  let strQuery=''
+  computerId != null?strQuery = `call MondialChange.pcpCompareCashBkp(?)`:strQuery = `call MondialChange.pcpCompareCashBkpAll()`
+  pool.query(strQuery, [computerId], (err, res) => {
+    if(!err){
+      if (res.length > 1){
+        let strQuery = `
+          INSERT INTO CerveBackup.balancecompare (
+            computerid,\`1\`,\`2\`,\`3\`,\`25\`,\`30\`,\`31\`,\`1c\`,\`2c\`,\`3c\`,\`25c\`,\`30c\`,\`31c\`,\`LastTrans\`
+            ) VALUES (
+              ?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            ) 
+            ON DUPLICATE KEY UPDATE
+            \`1\`=?,\`2\`=?,\`3\`=?,\`25\`=?,\`30\`=?,\`31\`=?,\`1c\`=?,\`2c\`=?,\`3c\`=?,\`25c\`=?,\`30c\`=?,\`31c\`=?,\`LastTrans\`=?
+            ;
+          `
+        pool.query(strQuery, [
+          computerId,
+          res[1][0]?res[1][0].Total:0,
+          res[1][1]?res[1][1].Total:0,
+          res[1][2]?res[1][2].Total:0,
+          res[1][3]?res[1][3].Total:0,
+          res[1][4]?res[1][4].Total:0,
+          res[1][5]?res[1][5].Total:0,
+          res[2][0]?res[2][0].Total:0,
+          res[2][1]?res[2][1].Total:0,
+          res[2][2]?res[2][2].Total:0,
+          res[2][3]?res[2][3].Total:0,
+          res[2][4]?res[2][4].Total:0,
+          res[2][5]?res[2][5].Total:0,
+          res[0][0].LastTrans,
+          res[1][0]?res[1][0].Total:0,
+          res[1][1]?res[1][1].Total:0,
+          res[1][2]?res[1][2].Total:0,
+          res[1][3]?res[1][3].Total:0,
+          res[1][4]?res[1][4].Total:0,
+          res[1][5]?res[1][5].Total:0,
+          res[2][0]?res[2][0].Total:0,
+          res[2][1]?res[2][1].Total:0,
+          res[2][2]?res[2][2].Total:0,
+          res[2][3]?res[2][3].Total:0,
+          res[2][4]?res[2][4].Total:0,
+          res[2][5]?res[2][5].Total:0,
+          res[0][0].LastTrans
+          ]
+          ,(err) => {
+            if (err) next(err)
+            else next(null, true)
+            strQuery = `
+              SELECT (\`1\`=\`1c\` AND \`2\`=\`2c\` AND \`3\`=\`3c\` AND \`25\`=\`25c\` AND \`30\`=\`30c\` AND \`31\`=\`31c\`) 
+              FROM balancecompare WHERE computerid = ? INTO @compres;
+              INSERT INTO computerinfo (
+                computerid, MCForexTalkVersion, ConsoleCashCompare
+                ) VALUES (
+                  ?,'',@compres
+                ) 
+                ON DUPLICATE KEY UPDATE
+                ConsoleCashCompare = @compres
+                ;
+            `
+            pool.query(strQuery, [computerId,computerId], (err) => {
+              if (err) logger.error(`Error while updating ConsoleCashCompare of computerinfo: ${err}`)
+            })
+        })
+      }else next(null, false)
+    }
+    else next(err) 
   })
 }
 

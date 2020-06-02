@@ -185,7 +185,14 @@ exports.upload = (req, res) => {
                   restoreDB(computerId, filename, (err, result) => {
                     if (result) {
                       logger.info(`Restore of backupfile ${filename} was succesfull`)
-                      return res.status(200).send(`true`)
+                      res.status(200).send(`true`)
+                      store.runcompare(computerId, (err, compres) =>{
+                        if(!err && compres){
+                          logger.info(`Compare of balance for computerId ${computerId} completed`)
+                        }else{
+                          logger.error(`Compare of balance for computerId ${computerId} failed ${err}`)
+                        }
+                      })
                     }else{
                       logger.error(`Restore of backupfile ${filename} failed: ${err}`)
                       return res.status(500).send(`Restore of backupfile ${filename} failed`)

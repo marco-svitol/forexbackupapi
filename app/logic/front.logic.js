@@ -98,3 +98,14 @@ exports.cancelAction = (req, res) => {
     }
 	})
 }
+
+exports.runcompare = (req, res) => {
+  store.runcompare( req.body.computerId, (err,rres) => {
+    if (err) {
+      logger.error(`Runcompare action for failed: ` + err)
+      return res.status(500).send(`Runcompare action failed`)
+    }else{
+      return res.status(200).send(rres)
+    }
+  })
+}

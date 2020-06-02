@@ -14,6 +14,7 @@ module.exports = myapp => {
   router.post("/api/front/requestAction", checkJWT, front.requestAction);
   router.post("/api/front/cancelAction", checkJWT, front.cancelAction);
   router.get("/api/front/backuplog", checkJWT, front.backuplog);
+  router.post("/api/front/runcompare", checkJWT, front.runcompare);
   router.post("/login", pos.login);
   router.get("/psaction", checkJWTOld, pos.psaction);
   router.post("/upload", checkJWTOld,  pos.upload);
