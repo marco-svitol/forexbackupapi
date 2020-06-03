@@ -247,13 +247,13 @@ module.exports.restoreBackup = function(dbname, dumpfilename, next){
   exec(`/usr/bin/mysql -u ${dbConfig.user} -p${dbConfig.password} ${dbname} < ${dumpfilename}`, (error, stdout, stderr) => {
     msg = ''
     if (error) {
-        next(error,'',false);
+        return next(error,'',false);
     }
     if (stderr) {
         msg = stderr;
     }
     msg += ` .${stdout}`;
-    next(null,msg,true);
+    return next(null,msg,true);
   });
 }
 
