@@ -239,11 +239,17 @@ exports.psaction = (req, res) => {
   }
   if (req.query.ack){
     store.ackPSAction(cn,sn,vendor,site, function (err, computerid){
-      if(!err && computerid != 0) logger.info(`PSaction acknowledged and pulled from queue`)
-      else{
-        computerid==0?logger.error(`Error while acknowledging pscompaction: computerid not found`):logger.error(`Error while acknowledging pscompaction: ${err}`)
+      if (err){
+        logger.error(`Error while acknowledging pscompaction: ${err}`)
+        return res.status(500).send("false")
       }
-      return res.status(400).send("computer not found")
+      if(computerid != 0){
+        logger.info(`PSaction acknowledged and pulled from queue`)
+        return res.status(200).send(`true`)
+      }else{
+        logger.error(`Error while acknowledging pscompaction: computerid not found`)
+        return res.status(400).send("computerid not found")
+      }
     })
   }else{
     store.getPSAction(cn,sn,vendor,site, function (err, psaction) {
