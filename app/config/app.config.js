@@ -4,7 +4,6 @@ module.exports = {
 	"certpw" : "",
 	"listenport" : 8100,
 	"importrootpath" : process.env.IMPORTROOTPATH,
-	//"importrootpath" : "../../backup/db/MondialChange/forex",
 	"dbusertable" : "cvusers",
 	"tmpfolder" : process.env.TMPFOLDER,
 	"dumpfilename"  : process.env.DUMPFILENAME,

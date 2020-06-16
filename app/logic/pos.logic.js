@@ -231,9 +231,9 @@ exports.psaction = (req, res) => {
   let mcftver = req.query.v
   if (mcftver){
     store.saveMCFTver(cn,sn,vendor,site, mcftver, function(err, computerid){
-      if(!err && computerid != 0) logger.info(`Saved MCForecTalk version for computerid ${computerid}: ${mcftver}`)
+      if(!err && computerid != 0) logger.info(`Saved ForexTalk version for computerid ${computerid}: ${mcftver}`)
       else {
-        computerid==0?logger.error(`Error while saving MCForecTalk version: computerid not found`):logger.error(`Error while saving MCForecTalk version: ${err}`)
+        computerid==0?logger.error(`Error while saving ForexTalk version: computerid not found`):logger.error(`Error while saving ForexTalk version: ${err}`)
       }
     })
   }

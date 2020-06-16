@@ -26,7 +26,6 @@ exports.login = (req, res) => {  // Login Service
   })
 }
 
-//TODO: remove old refreshtoken + refreshtoken expiration
 exports.refreshtoken = (req, res) => { 
   var username = req.body.user
   var refreshToken = req.body.refreshtoken

@@ -11,7 +11,7 @@ app.use(fileUpload());
 const logger=require('./app/logger'); 
 const cors = require('cors');
 var corsOptions = {
-  origin: ["https://backup.roncola.net","http://localhost:8080"],
+  origin: [process.env.URLORIGIN,"http://localhost:8080"],
   credentials: true
 };
 app.use(cors(corsOptions));
@@ -21,7 +21,7 @@ app.use(cors(corsOptions));
 
 // default
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to MondialChangeAPI" });
+  res.json({ message: "Welcome to ForexBackupAPI" });
 });
 
 // Run the context for each request. Assign a unique identifier to each request

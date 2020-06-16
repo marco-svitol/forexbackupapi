@@ -88,7 +88,6 @@ module.exports.getbkpFolder = function(computerId, next){
   })
 }
 
-
 module.exports.getAction = function(computerid, next){
   let strQuery = `SELECT action FROM computeractions WHERE computerid = ?`
   pool.query(strQuery, [computerid], (err, res) => {
@@ -298,12 +297,12 @@ module.exports.cancelAction = function(computerId, action, next){
 
 module.exports.runcompare = function(computerId, next){
   let strQuery=''
-  computerId != null?strQuery = `call MondialChange.pcpCompareCashBkp(?)`:strQuery = `call MondialChange.pcpCompareCashBkpAll()`
+  computerId != null?strQuery = `call ${process.env.CONSOLEDBNAME}.pcpCompareCashBkp(?)`:strQuery = `call ${process.env.CONSOLEDBNAME}.pcpCompareCashBkpAll()`
   pool.query(strQuery, [computerId], (err, res) => {
     if(!err){
       if (res.length > 1){
         let strQuery = `
-          INSERT INTO CerveBackup.balancecompare (
+          INSERT INTO ${process.env.DBNAME}.balancecompare (
             computerid,\`1\`,\`2\`,\`3\`,\`25\`,\`30\`,\`31\`,\`1c\`,\`2c\`,\`3c\`,\`25c\`,\`30c\`,\`31c\`,\`LastTrans\`
             ) VALUES (
               ?,?,?,?,?,?,?,?,?,?,?,?,?,?
