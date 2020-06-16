@@ -11,7 +11,7 @@ app.use(fileUpload());
 const logger=require('./app/logger'); 
 const cors = require('cors');
 var corsOptions = {
-  origin: [process.env.URLORIGIN,"http://localhost:8080"],
+  origin: [process.env.URLORIGIN],
   credentials: true
 };
 app.use(cors(corsOptions));
