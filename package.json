@@ -29,7 +29,7 @@
     "fs": "0.0.1-security",
     "http": "0.0.1-security",
     "jsonwebtoken": "^8.5.1",
-    "moment-timezone": "^0.5.31",
+    "moment-timezone": "^0.5.35",
     "mysql": "^2.18.1",
     "node-stream-zip": "^1.11.1",
     "path": "^0.12.7",
